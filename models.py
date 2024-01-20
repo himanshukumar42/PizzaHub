@@ -15,15 +15,14 @@ class User(Base):
 
     orders = relationship("Order", back_populates="user")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<User: {self.username}>"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"User: {self.username}"
 
 
 class Order(Base):
-
     ORDER_STATUS = (
         ("PENDING", "pending"),
         ("IN-Transit", "in-transit"),
@@ -44,8 +43,8 @@ class Order(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     user = relationship("User", back_populates="orders")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Order: {self.id}>"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Order: {self.id}"
