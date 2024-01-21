@@ -33,7 +33,7 @@ async def signup(user: SignUpModel, db: Session = Depends(get_db)):
     if db_user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="user already exists")
     new_user = User(
-        username=user.email,
+        username=user.username,
         email=user.email,
         password=generate_password_hash(user.password),
         is_active=user.is_active,
