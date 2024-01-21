@@ -15,12 +15,6 @@ class User(Base):
 
     orders = relationship("Order", back_populates="user")
 
-    def __repr__(self) -> str:
-        return f"<User: {self.username}>"
-
-    def __str__(self) -> str:
-        return f"User: {self.username}"
-
 
 class Order(Base):
     ORDER_STATUS = (
@@ -42,9 +36,3 @@ class Order(Base):
     pizza_size = Column(ChoiceType(choices=PIZZA_SIZE), default="SMALL")
     user_id = Column(Integer, ForeignKey("users.id"))
     user = relationship("User", back_populates="orders")
-
-    def __repr__(self) -> str:
-        return f"<Order: {self.id}>"
-
-    def __str__(self) -> str:
-        return f"Order: {self.id}"
