@@ -1,7 +1,8 @@
-from fastapi import Request, HTTPException, status
+from fastapi import Request, HTTPException, status, Response
 from fastapi.security.http import HTTPBase, HTTPBearerModel
 from fastapi.security.utils import get_authorization_scheme_param
 from starlette.status import HTTP_403_FORBIDDEN
+from async_fastapi_jwt_auth import AuthJWT
 from schemas import Settings
 from typing import Optional
 import time
@@ -67,7 +68,7 @@ class JWTBearer(AuthJWTBearer):
             if not credentials.scheme == "Bearer":
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="invalid or expired token")
             if verify_jwt(credentials.credentials):
-                return credentials.credentials
+                return AuthJWT(req=request)
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="invalid or expired token")
         else:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="invalid or expired token ")

@@ -1,5 +1,19 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional, Any
+from typing import Optional
+from enum import Enum
+
+
+class PizzaSize(str, Enum):
+    small = "Small"
+    medium = "Medium"
+    large = "Large"
+    x_large = "Extra-Large"
+
+
+class OrderStatus(str, Enum):
+    pending = "Pending"
+    in_transit = "In-transit"
+    delivered = "Delivered"
 
 
 class Settings(BaseModel):
@@ -45,14 +59,14 @@ class LoginModel(BaseModel):
 class OrderModel(BaseModel):
     id: Optional[int] = None
     quantity: int
-    order_status: Optional[str] = "PENDING"
-    pizza_size: Optional[str] = "SMALL"
+    order_status: Optional[OrderStatus] = "Pending"
+    pizza_size: Optional[PizzaSize] = "Small"
 
     class Config:
         from_attributes = True
-        json_schema_extra = {
-            "example": {
-                "quantity": 1,
-                "pizza_size": "SMALL",
-            }
-        }
+        # json_schema_extra = {
+        #     "example": {
+        #         "quantity": 1,
+        #         "pizza_size": "SMALL",
+        #     }
+        # }
