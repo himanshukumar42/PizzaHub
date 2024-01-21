@@ -4,6 +4,9 @@ from typing import Optional, Any
 
 class Settings(BaseModel):
     authjwt_secret_key: str = "secret"
+    authjwt_access_token_expires: int = 300
+    authjwt_refresh_token_expires: int = 300
+    authjwt_algorithm: str = "HS256"
 
 
 class SignUpModel(BaseModel):
@@ -35,5 +38,21 @@ class LoginModel(BaseModel):
             "example": {
                 "username": "johndoe",
                 "password": "Johndoe@123",
+            }
+        }
+
+
+class OrderModel(BaseModel):
+    id: Optional[int] = None
+    quantity: int
+    order_status: Optional[str] = "PENDING"
+    pizza_size: Optional[str] = "SMALL"
+
+    class Config:
+        from_attributes = True
+        json_schema_extra = {
+            "example": {
+                "quantity": 1,
+                "pizza_size": "SMALL",
             }
         }

@@ -4,6 +4,7 @@ from auth_routes import auth_router
 from order_routes import order_router
 from async_fastapi_jwt_auth import AuthJWT
 from async_fastapi_jwt_auth.exceptions import AuthJWTException
+
 from schemas import Settings
 
 app = FastAPI()
@@ -25,4 +26,4 @@ def health():
 
 
 app.include_router(auth_router, prefix="/auth")
-app.include_router(order_router, prefix="/order")
+app.include_router(order_router, prefix="/orders")
