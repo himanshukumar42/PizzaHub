@@ -11,8 +11,22 @@ order_router = APIRouter(tags=["orders"])
 session = SessionLocal(bind=engine)
 
 
+@order_router.get("/hello")
+async def hello():
+    return {"hello": "world!"}
+
+
 @order_router.post("/", status_code=status.HTTP_201_CREATED, dependencies=[Depends(JWTBearer())])
 async def place_order(order: OrderModel, Authorize: AuthJWT = Depends()):
+    """
+        ### Represents the HTTP POST request for /orders endpoint.
+
+    - **order**: The JSON request object with Pizza_Size, Quantity.
+    - **query_param**: No Query Params.
+
+    ### Returns:
+      - JSON object with the order information.
+    """
     username = await Authorize.get_jwt_subject()
     db_user = session.query(User).filter(User.username == username).first()
     new_order = Order(
@@ -34,6 +48,15 @@ async def place_order(order: OrderModel, Authorize: AuthJWT = Depends()):
 
 @order_router.get("/", status_code=status.HTTP_200_OK, dependencies=[Depends(JWTBearer())])
 async def list_all_orders(Authorize=Depends(JWTBearer())):
+    """
+        ### Represents the HTTP GET request for /orders endpoint.
+
+    - **query_param**: No Query Params.
+
+    ### Returns:
+      - List of JSON object with the order information.
+    """
+
     username = await Authorize.get_jwt_subject()
     db_user = session.query(User).filter(User.username == username).first()
     if db_user.is_staff:
@@ -44,6 +67,14 @@ async def list_all_orders(Authorize=Depends(JWTBearer())):
 
 @order_router.get("/{id}", status_code=status.HTTP_200_OK, dependencies=[Depends(JWTBearer())])
 async def get_order_by_id(id: int, Authorize=Depends(JWTBearer())):
+    """
+        ### Represents the HTTP GET request for /orders/{id} endpoint.
+
+    - **query_param**: id of the order.
+
+    ### Returns:
+      - JSON object with the order information.
+    """
     username = await Authorize.get_jwt_subject()
     db_user = session.query(User).filter(User.username == username).first()
     if db_user.is_staff:
@@ -56,6 +87,14 @@ async def get_order_by_id(id: int, Authorize=Depends(JWTBearer())):
 
 @order_router.get("/user/orders", status_code=status.HTTP_200_OK, dependencies=[Depends(JWTBearer())])
 async def get_all_order_by_user_id(Authorize=Depends(JWTBearer())):
+    """
+        ### Represents the HTTP GET request for /orders/user/orders endpoint.
+
+    - **query_param**: No Query Params.
+
+    ### Returns:
+      - List of JSON object with all the order information of a user.
+    """
     username = await Authorize.get_jwt_subject()
     db_user = session.query(User).filter(User.username == username).first()
     return jsonable_encoder(db_user.orders)
@@ -63,6 +102,14 @@ async def get_all_order_by_user_id(Authorize=Depends(JWTBearer())):
 
 @order_router.get("/user/orders/{order_id}", status_code=status.HTTP_200_OK, dependencies=[Depends(JWTBearer())])
 async def get_order_by_order_id(id: int, Authorize=Depends(JWTBearer())):
+    """
+        ### Represents the HTTP GET request for /orders/user/orders/{order_id} endpoint.
+
+    - **query_param**: id of the order.
+
+    ### Returns:
+      - JSON object with the order information of the user by order id.
+    """
     username = await Authorize.get_jwt_subject()
     db_user = session.query(User).filter(User.username == username).first()
     if db_user.is_staff:
@@ -77,6 +124,15 @@ async def get_order_by_order_id(id: int, Authorize=Depends(JWTBearer())):
 
 @order_router.put("/order/{order_id}", status_code=status.HTTP_200_OK, dependencies=[Depends(JWTBearer())])
 async def update_order_by_order_id(id: int, order: OrderModel, Authorize=Depends(JWTBearer())):
+    """
+        ### Represents the HTTP PUT request for /orders/{order_id}/ endpoint.
+
+    - **order**: The JSON request object with pizza_size, quantity.
+    - **query_param**: id of the order.
+
+    ### Returns:
+      - JSON object with the updated order information.
+    """
     username = await Authorize.get_jwt_subject()
     db_user = session.query(User).filter(User.username == username).first()
     db_order = session.query(Order).filter(Order.user_id == db_user.id, Order.id == id).first()
@@ -95,6 +151,15 @@ async def update_order_by_order_id(id: int, order: OrderModel, Authorize=Depends
 
 @order_router.put("/order/status/{order_id}", status_code=status.HTTP_200_OK, dependencies=[Depends(JWTBearer())])
 async def update_order_status_by_order_id(id: int, order: OrderStatusModel, Authorize=Depends(JWTBearer())):
+    """
+        ### Represents the HTTP PUT request for /orders/order/status/{order_id} endpoint.
+
+    - **order**: The JSON request object with order_status.
+    - **query_param**: id of the order.
+
+    ### Returns:
+      - JSON object with the updated order information.
+    """
     username = await Authorize.get_jwt_subject()
     db_user = session.query(User).filter(User.username == username).first()
     if not db_user.is_staff:
@@ -116,6 +181,14 @@ async def update_order_status_by_order_id(id: int, order: OrderStatusModel, Auth
 
 @order_router.delete("/order/{order_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(JWTBearer())])
 async def delete_order_by_order_id(id: int, Authorize=Depends(JWTBearer())):
+    """
+        ### Represents the HTTP DELETE request for /orders/order/{id} endpoint.
+
+    - **query_param**: id of the order.
+
+    ### Returns:
+      - No Content
+    """
     username = await Authorize.get_jwt_subject()
     db_user = session.query(User).filter(User.username == username).first()
     if not db_user.is_staff:

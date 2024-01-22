@@ -4,9 +4,22 @@ from auth_routes import auth_router
 from order_routes import order_router
 from async_fastapi_jwt_auth import AuthJWT
 from async_fastapi_jwt_auth.exceptions import AuthJWTException
-
 from schemas import Settings
 
+description = """
+PizzaHub API helps you do awesome stuff. 🚀
+
+## Orders
+
+You can **read orders**.
+
+## Users
+
+You will be able to:
+
+* **Create users** (_not implemented_).
+* **Read users** (_not implemented_).
+"""
 app = FastAPI()
 
 

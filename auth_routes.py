@@ -15,11 +15,28 @@ session = SessionLocal(bind=engine)
 
 @auth_router.get("/", dependencies=[Depends(JWTBearer())])
 async def health():
+    """
+        ### Represents the HTTP POST request for /auth/health/ endpoint.
+
+       - **query_param**: No query params.
+
+       ### Returns:
+         - JSON object with the health check.
+    """
     return {"health": "ok"}
 
 
 @auth_router.post("/signup", response_model=SignUpModel, status_code=status.HTTP_201_CREATED)
 async def signup(user: SignUpModel):
+    """
+        ### Represents the HTTP POST request for /auth/signup/ endpoint.
+
+       - **user**: The JSON request object with username, email, password.
+       - **query_param**: No query params.
+
+       ### Returns:
+         - JSON object with the access_token, refresh_token information.
+       """
     db_user = bool(session.query(User).filter((User.username == user.username) | (User.email == user.email)).first())
     if db_user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="user already exists")
@@ -37,6 +54,15 @@ async def signup(user: SignUpModel):
 
 @auth_router.post("/login", status_code=status.HTTP_200_OK)
 async def login(user: LoginModel, Authorize: AuthJWT = Depends()):
+    """
+           ### Represents the HTTP POST request for /auth/login/ endpoint.
+
+       - **user**: The JSON request object with username, password.
+       - **query_param**: No query params.
+
+       ### Returns:
+         - JSON object with the access_token, refresh_token information.
+       """
     db_user = session.query(User).filter((User.username == user.username)).first()
     if not db_user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="user does not exists")
@@ -74,6 +100,14 @@ async def login(user: LoginModel, Authorize: AuthJWT = Depends()):
 
 @auth_router.get("/refresh", status_code=status.HTTP_200_OK)
 async def refresh(Authorize: AuthJWT = Depends()):
+    """
+       ### Represents the HTTP GET request for /auth/refresh endpoint.
+
+   - **query_param**: No query params.
+
+    ### Returns:
+     - JSON object with the access_token, refresh_token information.
+    """
     username = await Authorize.get_jwt_subject()
     db_user = session.query(User).filter((User.username == username)).first()
     access_token = await Authorize.create_access_token(
