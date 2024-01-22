@@ -64,9 +64,21 @@ class OrderModel(BaseModel):
 
     class Config:
         from_attributes = True
-        # json_schema_extra = {
-        #     "example": {
-        #         "quantity": 1,
-        #         "pizza_size": "SMALL",
-        #     }
-        # }
+        json_schema_extra = {
+            "example": {
+                "pizza_size": "Small",
+                "quantity": 1,
+            }
+        }
+
+
+class OrderStatusModel(BaseModel):
+    order_status: Optional[OrderStatus] = "Pending"
+
+    class Config:
+        from_attributes = True
+        json_schema_extra = {
+            "example": {
+                "order_status": "Pending",
+            }
+        }

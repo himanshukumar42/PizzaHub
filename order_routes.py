@@ -3,7 +3,7 @@ from fastapi.encoders import jsonable_encoder
 from async_fastapi_jwt_auth import AuthJWT
 from jwt_bearer import JWTBearer
 from models import User, Order
-from schemas import OrderModel
+from schemas import OrderModel, OrderStatusModel
 from database import SessionLocal, engine
 
 order_router = APIRouter(tags=["orders"])
@@ -12,7 +12,7 @@ session = SessionLocal(bind=engine)
 
 
 @order_router.post("/", status_code=status.HTTP_201_CREATED, dependencies=[Depends(JWTBearer())])
-async def post_order(order: OrderModel, Authorize: AuthJWT = Depends()):
+async def place_order(order: OrderModel, Authorize: AuthJWT = Depends()):
     username = await Authorize.get_jwt_subject()
     db_user = session.query(User).filter(User.username == username).first()
     new_order = Order(
@@ -27,7 +27,7 @@ async def post_order(order: OrderModel, Authorize: AuthJWT = Depends()):
         "pizza_size": new_order.pizza_size.value,
         "quantity": new_order.quantity,
         "order_status": new_order.order_status.value,
-        "order_by": db_user.username,
+        "order_by": new_order.user.username,
     }
     return jsonable_encoder(response)
 
@@ -38,14 +38,7 @@ async def list_all_orders(Authorize=Depends(JWTBearer())):
     db_user = session.query(User).filter(User.username == username).first()
     if db_user.is_staff:
         orders = session.query(Order).all()
-        all_orders = [{
-            "id": order.id,
-            "pizza_size": order.pizza_size.value,
-            "quantity": order.quantity,
-            "order_status": order.order_status.value,
-            "order_by": order.user_id
-        } for order in orders]
-        return jsonable_encoder(all_orders)
+        return jsonable_encoder(orders)
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="invalid superuser")
 
 
@@ -57,14 +50,7 @@ async def get_order_by_id(id: int, Authorize=Depends(JWTBearer())):
         order = session.query(Order).filter(Order.id == id).first()
         if order is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="order not found")
-        order_dict = {
-            "id": order.id,
-            "pizza_size": order.pizza_size.value,
-            "quantity": order.quantity,
-            "order_status": order.order_status.value,
-            "order_by": order.user_id
-        }
-        return jsonable_encoder(order_dict)
+        return jsonable_encoder(order)
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="invalid superuser")
 
 
@@ -73,16 +59,69 @@ async def get_all_order_by_user_id(Authorize=Depends(JWTBearer())):
     username = await Authorize.get_jwt_subject()
     db_user = session.query(User).filter(User.username == username).first()
     return jsonable_encoder(db_user.orders)
-    # if not db_user:
-    #     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user not found")
-    # order = session.query(Order).filter(Order.user_id == db_user.id).first()
-    # if order is None:
-    #     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="order not found")
-    # order_dict = {
-    #     "id": order.id,
-    #     "pizza_size": order.pizza_size.value,
-    #     "quantity": order.quantity,
-    #     "order_status": order.order_status.value,
-    #     "order_by": order.user_id
-    # }
-    # return jsonable_encoder(order_dict)
+
+
+@order_router.get("/user/orders/{order_id}", status_code=status.HTTP_200_OK, dependencies=[Depends(JWTBearer())])
+async def get_order_by_order_id(id: int, Authorize=Depends(JWTBearer())):
+    username = await Authorize.get_jwt_subject()
+    db_user = session.query(User).filter(User.username == username).first()
+    if db_user.is_staff:
+        order = session.query(Order).filter(Order.id == id).first()
+    else:
+        order = session.query(Order).filter(Order.user_id == db_user.id, Order.id == id).first()
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="order not found")
+
+    return jsonable_encoder(order)
+
+
+@order_router.put("/order/{order_id}", status_code=status.HTTP_200_OK, dependencies=[Depends(JWTBearer())])
+async def update_order_by_order_id(id: int, order: OrderModel, Authorize=Depends(JWTBearer())):
+    username = await Authorize.get_jwt_subject()
+    db_user = session.query(User).filter(User.username == username).first()
+    db_order = session.query(Order).filter(Order.user_id == db_user.id, Order.id == id).first()
+    db_order.quantity = order.quantity
+    db_order.pizza_size = order.pizza_size
+    session.commit()
+    response = {
+        "id": db_order.id,
+        "pizza_size": db_order.pizza_size,
+        "quantity": db_order.quantity,
+        "order_status": db_order.order_status,
+        "order_by": db_order.user.username,
+    }
+    return jsonable_encoder(response)
+
+
+@order_router.put("/order/status/{order_id}", status_code=status.HTTP_200_OK, dependencies=[Depends(JWTBearer())])
+async def update_order_status_by_order_id(id: int, order: OrderStatusModel, Authorize=Depends(JWTBearer())):
+    username = await Authorize.get_jwt_subject()
+    db_user = session.query(User).filter(User.username == username).first()
+    if not db_user.is_staff:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="user must be admin")
+    db_order = session.query(Order).filter(Order.id == id).first()
+    if not db_order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="order not found")
+    db_order.order_status = order.order_status
+    session.commit()
+    response = {
+        "id": db_order.id,
+        "pizza_size": db_order.pizza_size,
+        "quantity": db_order.quantity,
+        "order_status": db_order.order_status,
+        "order_by": db_order.user.username,
+    }
+    return jsonable_encoder(response)
+
+
+@order_router.delete("/order/{order_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(JWTBearer())])
+async def delete_order_by_order_id(id: int, Authorize=Depends(JWTBearer())):
+    username = await Authorize.get_jwt_subject()
+    db_user = session.query(User).filter(User.username == username).first()
+    if not db_user.is_staff:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="user must be admin")
+    db_order = session.query(Order).filter(Order.id == id).first()
+    if not db_order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="order not found")
+    session.delete(db_order)
+    session.commit()

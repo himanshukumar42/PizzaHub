@@ -1,6 +1,5 @@
 from sqlalchemy import Column, Boolean, ForeignKey, Integer, String, Text, Enum
 from sqlalchemy.orm import relationship
-from sqlalchemy_utils.types import ChoiceType
 from schemas import PizzaSize, OrderStatus
 from database import Base
 
@@ -16,20 +15,11 @@ class User(Base):
 
     orders = relationship("Order", back_populates="user")
 
+    def __repr__(self):
+        return f"<User: {self.username}>"
+
 
 class Order(Base):
-    # ORDER_STATUS = (
-    #     ("PENDING", "pending"),
-    #     ("IN-Transit", "in-transit"),
-    #     ("DELIVERED", "delivered"),
-    # )
-    #
-    # PIZZA_SIZE = (
-    #     ("SMALL", "small"),
-    #     ("MEDIUM", "medium"),
-    #     ("LARGE", "large"),
-    #     ("EXTRA-LARGE", "extra-large"),
-    # )
     __tablename__ = "orders"
     id = Column(Integer, primary_key=True)
     quantity = Column(Integer, nullable=False)
@@ -37,3 +27,6 @@ class Order(Base):
     pizza_size = Column(Enum(PizzaSize), default="small")
     user_id = Column(Integer, ForeignKey("users.id"))
     user = relationship("User", back_populates="orders")
+
+    def __repr__(self):
+        return f"<Order {self.id}>"
